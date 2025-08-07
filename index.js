@@ -118,6 +118,38 @@ Respond clearly and concisely. Add some friendly words, and feel like chatting w
   }
 });
 
+app.post("/mock-interview", async (req, res) => {
+  const { question, answer } = req.body;
+
+  if (!question || !answer) {
+    return res.status(400).json({ error: "Question and answer are required" });
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    const prompt = `
+You are an experienced interviewer. 
+Analyze the following response to the interview question and provide detailed constructive feedback.
+
+Question: "${question}"
+Answer: "${answer}"
+
+Your feedback should help the candidate improve.
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    res.json({ feedback: text });
+  } catch (error) {
+    console.error("Error generating feedback:", error.message);
+    res.status(500).json({ error: "Failed to get feedback from AI." });
+  }
+});
+
+module.exports = router;
 
 app.listen(PORT, () => {
   console.log(`✅ Gemini resume review backend running on port ${PORT}`);
